@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sk700v-linux"
+version = "1.0.0"
+description = "Display live CPU stats on the Sudokoo SK700V cooler LCD (Linux)"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [{name = "Phil"}]
+keywords = ["sudokoo", "sk700v", "cooler", "lcd", "hardware-monitor", "linux"]
+classifiers = [
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+
+[project.scripts]
+sk700v = "sk700v.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["sk700v*"]
