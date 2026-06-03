@@ -1,7 +1,7 @@
 # SK700V Linux
 
 Display live CPU stats (temperature, load, power, frequency) on the **Sudokoo SK700V**
-CPU cooler's LCD screen — on Linux. A lightweight background service replacing the
+CPU cooler's LCD — on Linux. A lightweight background service replacing the
 Windows-only "MasterCraft" app.
 
 ![SK700V showing live CPU stats](docs/screenshot.jpg)
@@ -13,7 +13,8 @@ undocumented and Windows-only). The full protocol is documented in [PROTOCOL.md]
 
 - Live CPU **temperature, load, package power, and peak frequency** on the cooler LCD
 - Runs as a tiny background **systemd service** (~6 MB RAM), auto-starts on login
-- Celsius / Fahrenheit toggle
+- Celsius / Fahrenheit toggle (full range)
+- Power-usage progress bar
 - Adjustable update rate
 - No root needed at runtime (uses udev rules)
 
@@ -26,7 +27,7 @@ undocumented and Windows-only). The full protocol is documented in [PROTOCOL.md]
 ## Install
 
 ```bash
-git clone https://github.com/YOURNAME/sk700v-linux.git
+git clone https://github.com/Birchwood-Grey/sk700v-linux.git
 cd sk700v-linux
 ./install.sh
 ```
@@ -49,18 +50,20 @@ systemctl --user stop sk700v      # stop the monitor
 journalctl --user -u sk700v -f    # view live logs
 ```
 
-## Notes & limitations
+## Notes
 
-- **Fahrenheit is hardware-capped at 127 °F** — the display's temperature field
-  cannot show higher in any known mode. Celsius is full-range and recommended.
 - Power readings use Intel RAPL (works on AMD Ryzen too); the udev rule grants
   read access without root.
+- A few protocol bytes remain undecoded — see [PROTOCOL.md](PROTOCOL.md).
+  Contributions welcome.
 
 ## Credits
 
-Protocol reverse-engineered by studying the device and the excellent prior work in
-[Nortank12/deepcool-digital-linux](https://github.com/Nortank12/deepcool-digital-linux)
-and related projects. Not affiliated with Sudokoo or DeepCool.
+Reverse-engineered independently and cross-checked against prior community work:
+- [gdedrouas/SK700V-display](https://github.com/gdedrouas/SK700V-display)
+- [Nortank12/deepcool-digital-linux](https://github.com/Nortank12/deepcool-digital-linux) (and forks)
+
+Not affiliated with Sudokoo or DeepCool.
 
 ## Disclaimer
 

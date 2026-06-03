@@ -19,6 +19,7 @@ def run():
     unit, interval = cfg["unit"], cfg["interval"]
     tpath = sensors.find_temp_path()
     rpath = sensors.find_rapl()
+    pl2 = sensors.find_pl2()
     print(f"SK700V monitor  (unit={unit}, interval={interval}s)")
     print(f"  temp : {tpath or 'NOT FOUND'}")
     print(f"  power: {rpath or 'NOT FOUND (needs RAPL permission - see README)'}")
@@ -68,9 +69,10 @@ def run():
                         temp = sensors.read_temp_c(tpath)
                         fpeak = sensors.read_freq_peak_mhz()
                         freq_smooth = fpeak if freq_smooth == 0 else 0.6*freq_smooth + 0.4*fpeak
+                        ppct = protocol.clamp(round(power / pl2 * 100), 0, 100) if (pl2 and pl2 > 0) else 0
                         frame = protocol.build_data_frame(
                             temp if temp is not None else 40, load, power,
-                            round(freq_smooth), unit)
+                            round(freq_smooth), unit, power_pct=ppct)
                         shown = round(temp*9/5+32) if (unit == "F" and temp is not None) else temp
                         print(f"\rTEMP {shown}{unit}  LOAD {load}%  POWER {power}W  "
                               f"FREQ {freq_smooth/1000:.2f}GHz   ", end='', flush=True)

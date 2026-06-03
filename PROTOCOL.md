@@ -3,7 +3,8 @@
 Reverse-engineered notes for the Sudokoo SK700V CPU cooler's LCD (quad-segment:
 FREQ / LOAD / POWER / CPU TEMP). The device is undocumented and ships with a
 Windows-only app ("MasterCraft", a rebranded DeepCool tool). This document is the
-result of independent reverse engineering; it is not official.
+result of independent reverse engineering, cross-checked against community findings
+(see Credits at the end); it is not official.
 
 ## Device
 
@@ -25,11 +26,9 @@ result of independent reverse engineering; it is not official.
 | 6     | show flag         | 0x02 = display values; 0x00 = init/clear (boot animation) |
 | 7     | power high byte   | power = byte7 * 256 + byte8  (big-endian u16, watts) |
 | 8     | power low byte    | |
-| 9     | flag/config       | non-power; observed 0x0a in some frames; effect unconfirmed |
-| 10    | unit flag         | 0 = label "C", 1 = label "F" (relabel only — see note) |
-| 11    | constant          | 0x42 (required; not a checksum) |
-| 12    | CPU temp          | two-slope scale (see below); caps at 127 |
-| 13-14 | unused            | confirmed inert (0x00) |
+| 9     | power %           | 0-100, fills the progress bar under the wattage (independent of bytes 7-8) |
+| 10    | unit flag         | 0 = "C", 1 = "F" (label, and the unit the temp float is in) |
+| 11-14 | CPU temp          | IEEE-754 float32, big-endian, in the unit set by byte 10 |
 | 15    | load              | percent, raw 1:1 (0-100) |
 | 16-17 | frequency         | MHz, big-endian u16 (e.g. 10 68 = 4200 = 4.20 GHz) |
 | 18    | checksum          | sum(bytes[1..17]) % 256 |
@@ -39,23 +38,23 @@ result of independent reverse engineering; it is not official.
 The frame must be streamed continuously (~1-3 Hz) or the panel blanks. Sending a few
 0x00-flag frames once at startup wakes/initialises the display.
 
-### Temperature scale (byte 12)
+### Temperature (bytes 11-14)
 
-The displayed temperature number maps to byte 12 via a two-slope curve
-(verified by sweeping byte values and reading the panel):
+Temperature is a big-endian IEEE-754 single-precision float, in the unit set by byte 10:
 
-    displayed <= 63 :  byte = 4 * (displayed - 32)      (display = byte/4 + 32)
-    displayed >= 63 :  byte = 2 * displayed             (display = byte/2)
+    bytes[11..14] = struct.pack('>f', temperature_value)
+    e.g. 54.0 C -> 42 58 00 00 ;  158.0 F -> 43 1e 00 00
 
-The field hardware-caps at 127 (byte 255 -> 127) in every tested frame mode
-(0x0c and 0x0d). Celsius covers the full realistic range; Fahrenheit is limited
-to 127 F because the unit flag only changes the label, not the scale.
+Because it is a full 32-bit float, there is no display cap. (An earlier single-byte
+analysis appeared to show a "two-slope scale" capping at 127 — that was an artifact of
+holding the float's high byte at 0x42 and varying only the second byte. Encoding the
+full float removes the limit; both Celsius and Fahrenheit are full-range.)
 
 ### Unit flag (byte 10)
 
-Byte 10 changes only the label ("C" vs "F"); it does NOT convert the value.
-To display Fahrenheit correctly, the host must convert C -> F itself and encode
-the Fahrenheit number into byte 12 (subject to the 127 cap above).
+Byte 10 sets the label ("C" vs "F"). The temperature float in bytes 11-14 must be
+expressed in that same unit (the firmware does not convert), so the host converts
+C -> F itself when Fahrenheit is selected.
 
 ## Init / clear frame
 
@@ -75,10 +74,17 @@ Setting the show flag to 0x00 triggers the display's boot animation.
 - The Windows app's writer referenced GPU fields (gpuTemperature, gpuUsage, gpuPower,
   gpuClock) — the device may have a GPU display mode. Unexplored.
 
-## Open questions
+## Method
 
-- High-range Fahrenheit (>127 F): achievable in any mode? Would need a capture of the
-  official app running in F under load.
-- Brightness control: which command, if any?
+Frame templates were recovered by disassembling the app's V8 bytecode; field meanings
+and encodings were then mapped empirically by sending known byte values and reading the
+panel. The temperature float layout and the power-percentage byte were cross-checked
+against community findings (see Credits).
 
-## Met
+## Credits
+
+Independent reverse engineering, cross-referenced with prior community work:
+- gdedrouas/SK700V-display
+- Nortank12/deepcool-digital-linux (and forks)
+
+Contributions, corrections, and additional findings welcome.

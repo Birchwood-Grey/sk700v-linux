@@ -64,3 +64,13 @@ def read_freq_peak_mhz():
         except Exception:
             pass
     return round(best / 1000) if best else 0
+
+def find_pl2():
+    """RAPL PL2 (short-term power limit) for the package, in watts. None if unreadable."""
+    for c in sorted(glob.glob('/sys/class/powercap/intel-rapl:*/constraint_1_power_limit_uw')):
+        if c.split('/')[-2] == 'intel-rapl:0':
+            try:
+                return int(open(c).read().strip()) / 1e6
+            except Exception:
+                return None
+    return None
