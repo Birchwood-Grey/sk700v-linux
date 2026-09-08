@@ -1,2 +1,2 @@
 # Allow non-root reading of RAPL package energy (CPU power) for the SK700V monitor
-SUBSYSTEM=="powercap", ACTION=="add", RUN+="/bin/chmod -R a+r /sys/devices/virtual/powercap/intel-rapl"
+SUBSYSTEM=="powercap", ACTION=="add|change", KERNEL=="intel-rapl:0", RUN+="/bin/chmod a+r /sys/devices/virtual/powercap/intel-rapl/energy_uj"
